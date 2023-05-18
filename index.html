@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitLog</title>
+    <style>
+      html, body{
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      #app{
+        width: 100%;
+        height: 100%;
+      }
+
+      p{
+          margin: 8px;
+      }
+      .git-log-box{
+        border: 1px solid lightblue;
+        border-radius: 6px;
+        padding: 0 10px;
+        margin-top: 10px;
+      }
+
+      .git-log-box:hover{
+        cursor: pointer;
+      }
+
+      .git-list-ctx{
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        height: 100%;
+      }
+
+      .git-list-wrap{
+        width: 500px;
+        min-width: 500px;
+        max-width: 500px;
+        height: 100%;
+        overflow-y: auto;
+      }
+
+      .git-commit-detail{
+        height: 100%;
+        overflow-y: auto;
+        padding: 10px;
+        flex: 1;
+      }
+
+    </style>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <!-- <script src="/lib/socket.io.4.5.4.min.js"></script> -->
+</head>
+<body>
+    <div id="app">
+      <div class="git-list-ctx">
+        <div class="git-list-wrap">
+          <div v-for="(item, index) in gitLogList" class="git-log-box" @click="showCommitDetail(item)">
+            <p v-for="(i, indexChild) in item" :key="indexChild">
+                {{ i }}
+            </p>
+          </div>
+        </div>
+        <div class="git-commit-detail">
+          <p v-for="(item, index) in gitCommitDetail" :key="index">{{ item }}</p>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+        // import { createApp } from '/lib/vue.esm-browser.js'
+        
+        createApp({
+          data() {
+            return {
+              gitLogList: [],
+              socket: {},
+              gitCommitDetail: []
+            }
+          },
+          mounted() {
+            this.socket = io();
+            this.showGitLog()
+
+            this.socket.on('toShowCommitDetail', (msg) => {
+              // 
+              let _msg = msg.split('\n')
+              _msg = _msg.filter(item => item != '')
+              this.gitCommitDetail = _msg
+              console.log(3333333, _msg)
+            })
+          },
+          methods: {
+            showGitLog() {
+                this.socket.on('chatMessage', (msg) => {
+                    let _msg = msg.split('\n')
+                    _msg = _msg.filter(item => item != '')
+                    this.gitLogList = []
+                    for(let i = 0; i < _msg.length; i = i + 4) {
+                        let _itemLogBox = []
+                        _itemLogBox.push(_msg[i])
+                        _itemLogBox.push(_msg[i + 1])
+                        _itemLogBox.push(_msg[i + 2])
+                        _itemLogBox.push(_msg[i + 3])
+
+                        this.gitLogList.push(_itemLogBox)
+                    }
+                });
+            },
+            showCommitDetail(data) {
+              this.socket.emit('showCommitDetail', data);
+            }
+          }
+        }).mount('#app')
+    </script>
+</body>
+</html>
